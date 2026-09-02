@@ -56,6 +56,31 @@ app/
 ./gradlew assembleDebug
 ```
 
+## Release workflow
+
+This repository uses GitHub Actions to automate APK builds.
+
+- Pushes to `main` generate an alpha build automatically.
+  - Example version format: `0.1.12-alpha`
+  - Each push to `main` increments the build number.
+- Tags like `v0.1.0-beta.1` create beta releases.
+- Tags like `v0.1.0` create stable releases.
+
+Example commands:
+
+```bash
+git checkout main
+git pull origin main
+# after changes are ready
+# alpha build is generated automatically on push
+
+git tag v0.1.0-beta.1
+git push origin v0.1.0-beta.1
+
+git tag v0.1.0
+git push origin v0.1.0
+```
+
 ## Notes
 
 This version is a demo implementation with local game state and a backend seam designed for future real-money or server-authoritative integration.

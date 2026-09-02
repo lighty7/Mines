@@ -2,13 +2,18 @@ name: Android CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
+    tags:
+      - 'v*'
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Check out repository
@@ -24,8 +29,47 @@ jobs:
       - name: Grant Gradle wrapper permission
         run: chmod +x ./gradlew
 
+      - name: Compute version metadata
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+            RELEASE_TAG="${GITHUB_REF_NAME}"
+            if [[ "$VERSION" == *"-beta"* ]]; then
+              RELEASE_CHANNEL="beta"
+            elif [[ "$VERSION" == *"-alpha"* ]]; then
+              RELEASE_CHANNEL="alpha"
+            else
+              RELEASE_CHANNEL="stable"
+            fi
+          else
+            VERSION="0.1.${GITHUB_RUN_NUMBER}-alpha"
+            RELEASE_TAG="v${VERSION}"
+            RELEASE_CHANNEL="alpha"
+          fi
+
+          echo "APP_VERSION_NAME=${VERSION}" >> "$GITHUB_ENV"
+          echo "APP_VERSION_CODE=${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=${RELEASE_TAG}" >> "$GITHUB_ENV"
+          echo "RELEASE_CHANNEL=${RELEASE_CHANNEL}" >> "$GITHUB_ENV"
+
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest
 
       - name: Build debug APK
         run: ./gradlew assembleDebug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mines-${{ env.APP_VERSION_NAME }}
+          path: app/build/outputs/apk/debug/*.apk
+
+      - name: Create GitHub release
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: ${{ env.RELEASE_CHANNEL == 'stable' && 'Mines v' || 'Mines ' }}${{ env.APP_VERSION_NAME }}
+          prerelease: ${{ env.RELEASE_CHANNEL != 'stable' }}
+          files: app/build/outputs/apk/debug/*.apk
