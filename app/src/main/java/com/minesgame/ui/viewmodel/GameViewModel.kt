@@ -20,6 +20,7 @@ import java.util.Locale
 data class GameUiState(
     val balance: Double = 1000.0,
     val bet: Double = 10.0,
+    val boardSize: Int = MinesEngine.DEFAULT_BOARD_SIZE,
     val mines: Int = 5,
     val gameState: GameState = GameState.IDLE,
     val tiles: List<Tile> = emptyList(),
@@ -32,6 +33,8 @@ data class GameUiState(
     val formattedBet: String get() = formatMoney(bet)
     val formattedPotentialWin: String get() = formatMoney(potentialWin)
     val formattedMultiplier: String get() = String.format(Locale.US, "%.2fx", multiplier)
+    val mineChancePercent: Double get() = MinesEngine.mineChancePercentage(boardSize, mines)
+    val safeChancePercent: Double get() = MinesEngine.safeChancePercentage(boardSize, mines)
 
     companion object {
         fun formatMoney(value: Double): String =
@@ -54,17 +57,31 @@ class GameViewModel(
         _uiState.update { it.copy(bet = bet.coerceIn(0.0, it.balance)) }
     }
 
+    fun setBoardSize(boardSize: Int) {
+        if (active) return
+        val normalized = boardSize.coerceIn(MinesEngine.MIN_BOARD_SIZE, MinesEngine.MAX_BOARD_SIZE)
+        _uiState.update {
+            val maxMines = MinesEngine.maxMinesForBoard(normalized)
+            it.copy(
+                boardSize = normalized,
+                mines = it.mines.coerceIn(1, maxMines),
+            )
+        }
+    }
+
     fun setMines(mines: Int) {
         if (active) return
-        _uiState.update { it.copy(mines = mines.coerceIn(1, MinesEngine.MAX_MINES)) }
+        _uiState.update {
+            it.copy(mines = mines.coerceIn(1, MinesEngine.maxMinesForBoard(it.boardSize)))
+        }
     }
 
     fun placeBet() {
         val s = _uiState.value
         if (active || s.bet <= 0 || s.bet > s.balance) return
 
-        val mines = repository.createBoard(s.mines)
-        val tiles = (0 until MinesEngine.TILES)
+        val mines = repository.createBoard(s.mines, s.boardSize)
+        val tiles = (0 until MinesEngine.totalTiles(s.boardSize))
             .map { Tile(index = it, isMine = it in mines) }
 
         _uiState.update {
@@ -104,7 +121,7 @@ class GameViewModel(
         } else {
             tiles[index] = tile.copy(state = TileState.SAFE)
             val revealed = s.revealedCount + 1
-            val multiplier = MinesEngine.multiplierAt(s.mines, revealed)
+            val multiplier = MinesEngine.multiplierAt(s.mines, revealed, s.boardSize)
             val potentialWin = s.bet * multiplier
             _uiState.update {
                 it.copy(
