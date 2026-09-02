@@ -194,24 +194,26 @@ fun MinesGrid(
     tiles: List<Tile>,
     onTileClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    spacing: androidx.compose.ui.unit.Dp = 6.dp,
+    boardSize: Int = MinesEngine.DEFAULT_BOARD_SIZE,
 ) {
     val displayTiles = if (tiles.isEmpty()) {
-        List(MinesEngine.TILES) { Tile(index = it, isMine = false) }
+        List(MinesEngine.totalTiles(boardSize)) { Tile(index = it, isMine = false) }
     } else {
         tiles
     }
 
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(spacing),
     ) {
-        for (row in 0 until MinesEngine.GRID_SIZE) {
+        for (row in 0 until boardSize) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(spacing),
             ) {
-                for (col in 0 until MinesEngine.GRID_SIZE) {
-                    val index = row * MinesEngine.GRID_SIZE + col
+                for (col in 0 until boardSize) {
+                    val index = row * boardSize + col
                     TileView(
                         tile = displayTiles[index],
                         onClick = { onTileClick(index) },

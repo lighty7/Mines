@@ -51,7 +51,11 @@ import java.util.Locale
 private fun formatAmount(value: Double): String = String.format(Locale.US, "%.2f", value)
 
 @Composable
-fun TopBar(balance: String, modifier: Modifier = Modifier) {
+fun TopBar(
+    balance: String,
+    compact: Boolean = false,
+    modifier: Modifier = Modifier,
+) {
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -59,18 +63,18 @@ fun TopBar(balance: String, modifier: Modifier = Modifier) {
     ) {
         Text(
             text = "MINES",
-            style = MaterialTheme.typography.headlineMedium,
+            style = if (compact) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.headlineMedium,
             color = Green,
         )
         Column(horizontalAlignment = Alignment.End) {
             Text(
                 text = "Balance",
-                style = MaterialTheme.typography.bodyMedium,
+                style = if (compact) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
                 color = SecondaryText,
             )
             Text(
                 text = balance,
-                style = MaterialTheme.typography.titleLarge,
+                style = if (compact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
                 color = TextPrimary,
             )
         }
@@ -78,37 +82,43 @@ fun TopBar(balance: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun StatusCard(multiplier: String, potentialWin: String, modifier: Modifier = Modifier) {
+fun StatusCard(
+    multiplier: String,
+    potentialWin: String,
+    compact: Boolean = false,
+    modifier: Modifier = Modifier,
+) {
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Panel),
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(if (compact) 12.dp else 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Column {
                 Text(
                     text = "Multiplier",
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = if (compact) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
                     color = SecondaryText,
                 )
                 Text(
                     text = multiplier,
-                    style = MaterialTheme.typography.headlineLarge,
+                    style = if (compact) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge,
                     color = TextPrimary,
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = "Potential Win",
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = if (compact) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
                     color = SecondaryText,
                 )
                 Text(
                     text = potentialWin,
-                    style = MaterialTheme.typography.headlineLarge,
+                    style = if (compact) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.headlineLarge,
                     color = Green,
                 )
             }
@@ -121,6 +131,7 @@ fun CashOutButton(
     enabled: Boolean,
     potentialWin: String,
     onClick: () -> Unit,
+    compact: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     Button(
@@ -128,7 +139,7 @@ fun CashOutButton(
         enabled = enabled,
         modifier = modifier
             .fillMaxWidth()
-            .height(56.dp),
+            .height(if (compact) 48.dp else 56.dp),
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = Green,
@@ -139,7 +150,7 @@ fun CashOutButton(
     ) {
         Text(
             text = if (enabled) "CASH OUT  $potentialWin" else "CASH OUT",
-            style = MaterialTheme.typography.titleLarge,
+            style = if (compact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
         )
     }
 }
@@ -148,6 +159,7 @@ fun CashOutButton(
 fun BetButton(
     enabled: Boolean,
     onClick: () -> Unit,
+    compact: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     Button(
@@ -155,7 +167,7 @@ fun BetButton(
         enabled = enabled,
         modifier = modifier
             .fillMaxWidth()
-            .height(64.dp),
+            .height(if (compact) 52.dp else 64.dp),
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = Green,
@@ -164,7 +176,10 @@ fun BetButton(
             disabledContentColor = SecondaryText,
         ),
     ) {
-        Text(text = "BET", style = MaterialTheme.typography.titleLarge)
+        Text(
+            text = "BET",
+            style = if (compact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
+        )
     }
 }
 
@@ -174,6 +189,7 @@ fun BetAmountSection(
     balance: Double,
     enabled: Boolean,
     onBetChange: (Double) -> Unit,
+    compact: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     var text by remember { mutableStateOf(formatAmount(bet)) }
@@ -192,7 +208,7 @@ fun BetAmountSection(
     Column(modifier = modifier) {
         Text(
             text = "Bet Amount",
-            style = MaterialTheme.typography.titleMedium,
+            style = if (compact) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
             color = SecondaryText,
         )
         Spacer(Modifier.height(6.dp))
@@ -203,6 +219,7 @@ fun BetAmountSection(
             singleLine = true,
             enabled = enabled,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            textStyle = if (compact) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyLarge,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Green,
                 unfocusedBorderColor = TileBorder,
@@ -216,10 +233,10 @@ fun BetAmountSection(
             ),
         )
         Spacer(Modifier.height(6.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            QuickBetButton(label = "1/2", onClick = { onBetChange(bet / 2) })
-            QuickBetButton(label = "2x", onClick = { onBetChange(bet * 2) })
-            QuickBetButton(label = "MAX", onClick = { onBetChange(balance) })
+        Row(horizontalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp)) {
+            QuickBetButton(label = "1/2", onClick = { onBetChange(bet / 2) }, compact = compact)
+            QuickBetButton(label = "2x", onClick = { onBetChange(bet * 2) }, compact = compact)
+            QuickBetButton(label = "MAX", onClick = { onBetChange(balance) }, compact = compact)
         }
     }
 }
@@ -228,6 +245,7 @@ fun BetAmountSection(
 private fun RowScope.QuickBetButton(
     label: String,
     onClick: () -> Unit,
+    compact: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     OutlinedButton(
@@ -237,45 +255,93 @@ private fun RowScope.QuickBetButton(
         border = BorderStroke(1.dp, TileBorder),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
     ) {
-        Text(text = label)
+        Text(
+            text = label,
+            style = if (compact) MaterialTheme.typography.labelLarge else MaterialTheme.typography.bodyMedium,
+        )
     }
 }
 
 @Composable
 fun MineSelectorSection(
+    boardSize: Int,
     mines: Int,
     enabled: Boolean,
+    onBoardSizeChange: (Int) -> Unit,
     onMinesChange: (Int) -> Unit,
+    mineChancePercent: Double,
+    safeChancePercent: Double,
+    compact: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
         Text(
-            text = "Mines",
-            style = MaterialTheme.typography.titleMedium,
+            text = "Board size",
+            style = if (compact) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
             color = SecondaryText,
         )
         Spacer(Modifier.height(6.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp),
+        ) {
+            listOf(4, 5, 6).forEach { size ->
+                val selected = size == boardSize
+                Surface(
+                    onClick = { onBoardSizeChange(size) },
+                    enabled = enabled,
+                    modifier = Modifier.weight(1f).height(38.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (selected) Green else Tile,
+                    contentColor = if (selected) Color.White else TextPrimary,
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = "${size}x${size}",
+                            style = if (compact) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.bodyLarge,
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = "Mine chance: ${"%.2f".format(mineChancePercent)}%  •  Safe chance: ${"%.2f".format(safeChancePercent)}%",
+            style = if (compact) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
+            color = SecondaryText,
+        )
+
+        Spacer(Modifier.height(12.dp))
+        Text(
+            text = "Mines",
+            style = if (compact) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
+            color = SecondaryText,
+        )
+        Spacer(Modifier.height(6.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             StepperButton(
                 label = "-",
                 enabled = enabled && mines > 1,
-                onClick = { onMinesChange(mines - 1) }
+                onClick = { onMinesChange(mines - 1) },
+                compact = compact,
             )
             Text(
                 text = mines.toString(),
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.headlineMedium,
+                style = if (compact) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.headlineMedium,
                 color = TextPrimary,
             )
             StepperButton(
                 label = "+",
-                enabled = enabled && mines < MinesEngine.MAX_MINES,
-                onClick = { onMinesChange(mines + 1) }
+                enabled = enabled && mines < MinesEngine.maxMinesForBoard(boardSize),
+                onClick = { onMinesChange(mines + 1) },
+                compact = compact,
             )
         }
     }
@@ -286,12 +352,13 @@ private fun StepperButton(
     label: String,
     enabled: Boolean,
     onClick: () -> Unit,
+    compact: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     Surface(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.size(44.dp),
+        modifier = modifier.size(if (compact) 38.dp else 44.dp),
         shape = RoundedCornerShape(8.dp),
         color = Tile,
         contentColor = if (enabled) TextPrimary else SecondaryText,
@@ -302,7 +369,7 @@ private fun StepperButton(
         ) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.titleLarge,
+                style = if (compact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
                 color = if (enabled) TextPrimary else SecondaryText,
             )
         }
