@@ -10,10 +10,10 @@ import com.minesgame.data.engine.MinesEngine
  * generated server-side and returned as a committed hash.
  */
 interface GameRepository {
-    fun createBoard(mines: Int): Set<Int>
+    fun createBoard(mines: Int, boardSize: Int = MinesEngine.DEFAULT_BOARD_SIZE): Set<Int>
 }
 
 class LocalGameRepository : GameRepository {
-    override fun createBoard(mines: Int): Set<Int> =
-        MinesEngine.generateMinePositions(mines)
+    override fun createBoard(mines: Int, boardSize: Int): Set<Int> =
+        MinesEngine.generateMinePositions(mines, boardSize)
 }
