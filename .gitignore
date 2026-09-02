@@ -8,3 +8,12 @@
 .externalNativeBuild
 .cxx
 local.properties
+**/build/
+app/build/
+android-sdk/
+*.apk
+*.aab
+*.jks
+*.keystore
+*.log
+/.vscode/
