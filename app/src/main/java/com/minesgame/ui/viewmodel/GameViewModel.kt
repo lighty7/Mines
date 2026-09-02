@@ -38,7 +38,7 @@ data class GameUiState(
 
     companion object {
         fun formatMoney(value: Double): String =
-            String.format(Locale.US, "$%.2f", value)
+            String.format(Locale.US, "%.2f mineCoin", value)
     }
 }
 
