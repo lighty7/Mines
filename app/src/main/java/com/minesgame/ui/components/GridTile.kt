@@ -2,8 +2,16 @@ package com.minesgame.ui.components
 
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -32,6 +40,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.minesgame.data.engine.MinesEngine
 import com.minesgame.data.model.Tile
@@ -131,53 +141,93 @@ fun TileView(
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
-        targetValue = if (pressed) 1.03f else 1f,
+        targetValue = if (pressed) 0.96f else 1f,
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
         label = "tileScale",
     )
-    val reveal by animateFloatAsState(
-        targetValue = if (tile.state == TileState.SAFE || tile.state == TileState.MINE) 1f else 0f,
-        animationSpec = tween(durationMillis = 200),
+    val transition = updateTransition(tile.state, label = "tileState")
+    val revealProgress by transition.animateFloat(
+        transitionSpec = { tween(durationMillis = 420) },
         label = "tileReveal",
+    ) { state ->
+        if (state == TileState.SAFE || state == TileState.MINE) 1f else 0f
+    }
+    val background by animateColorAsState(
+        targetValue = when (tile.state) {
+            TileState.HIDDEN -> TileColor
+            TileState.REVEALING -> TileHover
+            TileState.SAFE -> TileSafe
+            TileState.MINE -> TileMine
+        },
+        animationSpec = tween(220),
+        label = "tileBackground",
     )
-
-    val background = when (tile.state) {
-        TileState.HIDDEN -> TileColor
-        TileState.REVEALING -> TileHover
-        TileState.SAFE -> TileSafe
-        TileState.MINE -> TileMine
-    }
-    val borderColor = when (tile.state) {
-        TileState.SAFE -> Green
-        TileState.MINE -> Red
-        else -> TileBorder
-    }
+    val borderColor by animateColorAsState(
+        targetValue = when (tile.state) {
+            TileState.SAFE -> Green
+            TileState.MINE -> Red
+            else -> TileBorder
+        },
+        animationSpec = tween(220),
+        label = "tileBorder",
+    )
+    val borderWidth by animateDpAsState(
+        targetValue = if (tile.state == TileState.SAFE || tile.state == TileState.MINE) 2.dp else 1.dp,
+        animationSpec = tween(220),
+        label = "tileBorderWidth",
+    )
+    val minePulse by rememberInfiniteTransition(label = "minePulse").animateFloat(
+        initialValue = 0.88f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = 850
+                0.88f at 0
+                1f at 425
+            },
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "minePulse",
+    )
+    val iconScale = 0.78f + (revealProgress * 0.22f)
+    val iconAlpha = revealProgress * if (tile.state == TileState.MINE) minePulse else 1f
 
     Box(
         modifier = modifier
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
+                rotationY = revealProgress * 180f
+                cameraDistance = 12f * density
             }
-            .shadow(3.dp, RoundedCornerShape(8.dp))
+            .shadow(if (tile.state == TileState.MINE) 6.dp else 3.dp, RoundedCornerShape(8.dp))
             .clip(RoundedCornerShape(8.dp))
             .background(background)
-            .border(1.dp, borderColor, RoundedCornerShape(8.dp))
+            .border(borderWidth, borderColor, RoundedCornerShape(8.dp))
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
                 enabled = tile.state == TileState.HIDDEN,
-                onClickLabel = "Reveal tile ${tile.index}",
+                onClickLabel = "Reveal tile ${tile.index + 1}",
                 onClick = onClick,
-            ),
+            )
+            .semantics {
+                contentDescription = when (tile.state) {
+                    TileState.HIDDEN -> "Hidden tile ${tile.index + 1}"
+                    TileState.SAFE -> "Safe tile ${tile.index + 1}"
+                    TileState.MINE -> "Mine tile ${tile.index + 1}"
+                    TileState.REVEALING -> "Revealing tile ${tile.index + 1}"
+                }
+            },
         contentAlignment = Alignment.Center,
     ) {
         Box(
             modifier = Modifier
                 .size(28.dp)
                 .graphicsLayer {
-                    scaleX = reveal
-                    scaleY = reveal
+                    scaleX = iconScale
+                    scaleY = iconScale
+                    alpha = iconAlpha
                 },
         ) {
             when (tile.state) {
