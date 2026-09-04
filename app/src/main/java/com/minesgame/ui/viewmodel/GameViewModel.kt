@@ -17,6 +17,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import java.util.Locale
 
+import com.minesgame.data.model.UserProfile
+
 data class GameUiState(
     val balance: Double = 1000.0,
     val bet: Double = 10.0,
@@ -28,6 +30,10 @@ data class GameUiState(
     val multiplier: Double = 1.0,
     val potentialWin: Double = 0.0,
     val lastResult: GameResult? = null,
+    val userProfile: UserProfile = UserProfile(),
+    val selectedLanguage: String = "English",
+    val hapticsEnabled: Boolean = true,
+    val soundEnabled: Boolean = false,
 ) {
     val formattedBalance: String get() = formatMoney(balance)
     val formattedBet: String get() = formatMoney(bet)
@@ -145,6 +151,71 @@ class GameViewModel(
                 lastResult = GameResult(won = true, multiplier = it.multiplier, payout = payout),
             )
         }
+    }
+
+    fun updateUserProfile(username: String, email: String, address: String) {
+        _uiState.update {
+            it.copy(
+                userProfile = it.userProfile.copy(
+                    username = username.ifBlank { if (it.userProfile.isGuest) "Guest" else "Player" },
+                    email = email,
+                    address = address,
+                )
+            )
+        }
+    }
+
+    fun login(email: String, password: String) {
+        val extractedName = email.substringBefore("@").ifBlank { "Player1" }
+        _uiState.update {
+            it.copy(
+                userProfile = UserProfile(
+                    username = extractedName.replaceFirstChar { char -> char.uppercase() },
+                    email = email,
+                    address = it.userProfile.address,
+                    isGuest = false,
+                )
+            )
+        }
+    }
+
+    fun register(username: String, email: String, address: String, password: String) {
+        val name = username.ifBlank { email.substringBefore("@").ifBlank { "Player1" } }
+        _uiState.update {
+            it.copy(
+                userProfile = UserProfile(
+                    username = name,
+                    email = email,
+                    address = address,
+                    isGuest = false,
+                )
+            )
+        }
+    }
+
+    fun logout() {
+        _uiState.update {
+            it.copy(
+                userProfile = UserProfile(
+                    username = "Guest",
+                    email = "",
+                    address = "",
+                    isGuest = true,
+                )
+            )
+        }
+    }
+
+    fun setLanguage(language: String) {
+        _uiState.update { it.copy(selectedLanguage = language) }
+    }
+
+    fun setHapticsEnabled(enabled: Boolean) {
+        _uiState.update { it.copy(hapticsEnabled = enabled) }
+    }
+
+    fun setSoundEnabled(enabled: Boolean) {
+        _uiState.update { it.copy(soundEnabled = enabled) }
     }
 
     companion object {
