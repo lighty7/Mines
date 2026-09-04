@@ -77,6 +77,10 @@ fun GameScreen(
         onHapticsToggle = viewModel::setHapticsEnabled,
         onSoundToggle = viewModel::setSoundEnabled,
         onClearError = viewModel::clearErrorMessage,
+        onRefreshTransactions = viewModel::loadTransactions,
+        onSendOtp = viewModel::sendOtp,
+        onVerifyOtp = viewModel::verifyOtp,
+        onResetPassword = viewModel::resetPassword,
     )
 }
 
@@ -97,6 +101,10 @@ private fun MinesGameContent(
     onHapticsToggle: (Boolean) -> Unit,
     onSoundToggle: (Boolean) -> Unit,
     onClearError: () -> Unit,
+    onRefreshTransactions: () -> Unit,
+    onSendOtp: suspend (String, String) -> Result<String>,
+    onVerifyOtp: suspend (String, String) -> Result<String>,
+    onResetPassword: suspend (String, String, String) -> Result<String>,
 ) {
     val active = state.gameState == GameState.ACTIVE
     val configuration = LocalConfiguration.current
@@ -132,12 +140,18 @@ private fun MinesGameContent(
         ProfileModal(
             userProfile = state.userProfile,
             formattedBalance = state.formattedBalance,
+            transactions = state.transactions,
+            isTransactionsLoading = state.isTransactionsLoading,
             isLoading = state.isLoading,
             errorMessage = state.errorMessage,
             onSaveProfile = onSaveProfile,
             onLogin = onLogin,
             onRegister = onRegister,
             onLogout = onLogout,
+            onRefreshTransactions = onRefreshTransactions,
+            onSendOtp = onSendOtp,
+            onVerifyOtp = onVerifyOtp,
+            onResetPassword = onResetPassword,
             onDismiss = {
                 onClearError()
                 showProfileSheet = false
@@ -163,6 +177,7 @@ private fun MinesGameContent(
                     onSoundToggle = onSoundToggle,
                     onOpenProfile = {
                         scope.launch { drawerState.close() }
+                        onRefreshTransactions()
                         showProfileSheet = true
                     },
                     onOpenHowToPlay = {
@@ -187,7 +202,10 @@ private fun MinesGameContent(
                     balance = state.formattedBalance,
                     userProfile = state.userProfile,
                     onOpenDrawer = { scope.launch { drawerState.open() } },
-                    onOpenProfile = { showProfileSheet = true },
+                    onOpenProfile = {
+                        onRefreshTransactions()
+                        showProfileSheet = true
+                    },
                     compact = compact,
                 )
                 StatusCard(

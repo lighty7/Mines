@@ -12,6 +12,7 @@ import com.minesgame.data.model.GameState
 import com.minesgame.data.model.Tile
 import com.minesgame.data.model.TileState
 import com.minesgame.data.model.UserProfile
+import com.minesgame.data.model.UserTransaction
 import com.minesgame.data.remote.api.ApiClient
 import com.minesgame.data.repository.AuthRepository
 import com.minesgame.data.repository.CashOutResult
@@ -46,6 +47,8 @@ data class GameUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val serverOnline: Boolean? = null,
+    val transactions: List<UserTransaction> = emptyList(),
+    val isTransactionsLoading: Boolean = false,
 ) {
     val formattedBalance: String get() = formatMoney(balance)
     val formattedBet: String get() = formatMoney(bet)
@@ -97,6 +100,7 @@ class GameViewModel(
                             balance = balance,
                         )
                     }
+                    loadTransactions()
                 }
             }
         }
@@ -152,6 +156,7 @@ class GameViewModel(
                             errorMessage = null,
                         )
                     }
+                    loadTransactions()
                 }
                 is StartRoundResult.Error -> {
                     _uiState.update {
@@ -211,6 +216,7 @@ class GameViewModel(
                             isLoading = false,
                         )
                     }
+                    loadTransactions()
                 }
                 is RevealTileResult.Error -> {
                     val updated = _uiState.value.tiles.toMutableList()
@@ -247,6 +253,7 @@ class GameViewModel(
                             isLoading = false,
                         )
                     }
+                    loadTransactions()
                 }
                 is CashOutResult.Error -> {
                     _uiState.update {
@@ -276,6 +283,7 @@ class GameViewModel(
                             tiles = emptyList(),
                         )
                     }
+                    loadTransactions()
                 }
                 .onFailure { error ->
                     _uiState.update {
@@ -304,6 +312,7 @@ class GameViewModel(
                             tiles = emptyList(),
                         )
                     }
+                    loadTransactions()
                 }
                 .onFailure { error ->
                     _uiState.update {
@@ -325,9 +334,36 @@ class GameViewModel(
                 gameState = GameState.IDLE,
                 activeRoundId = null,
                 tiles = emptyList(),
+                transactions = emptyList(),
                 errorMessage = null,
             )
         }
+    }
+
+    fun loadTransactions() {
+        if (_uiState.value.userProfile.isGuest) return
+        _uiState.update { it.copy(isTransactionsLoading = true) }
+        viewModelScope.launch {
+            authRepository.getTransactions()
+                .onSuccess { list ->
+                    _uiState.update { it.copy(transactions = list, isTransactionsLoading = false) }
+                }
+                .onFailure {
+                    _uiState.update { it.copy(isTransactionsLoading = false) }
+                }
+        }
+    }
+
+    suspend fun sendOtp(email: String, reason: String = "verification"): Result<String> {
+        return authRepository.sendOtp(email, reason)
+    }
+
+    suspend fun verifyOtp(email: String, code: String): Result<String> {
+        return authRepository.verifyOtp(email, code)
+    }
+
+    suspend fun resetPassword(email: String, code: String, newPassword: String): Result<String> {
+        return authRepository.resetPassword(email, code, newPassword)
     }
 
     fun updateUserProfile(username: String, email: String, address: String) {
