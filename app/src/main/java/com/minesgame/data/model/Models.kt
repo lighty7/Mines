@@ -15,3 +15,10 @@ data class GameResult(
     val multiplier: Double,
     val payout: Double,
 )
+
+data class UserProfile(
+    val username: String = "Player1",
+    val email: String = "player@example.com",
+    val address: String = "123 Main St",
+)
+
