@@ -56,13 +56,26 @@ class ApiClient(private val tokenManager: TokenManager) {
             val errorBody = response.errorBody()?.string()
             if (!errorBody.isNullOrBlank()) {
                 val parsed = gson.fromJson(errorBody, ErrorResponse::class.java)
-                parsed.error ?: parsed.message ?: "Request failed (${response.code()})"
+                val raw = parsed.error ?: parsed.message ?: "Request failed (${response.code()})"
+                cleanErrorMessage(raw)
             } else {
                 "Request failed (${response.code()})"
             }
         } catch (e: Exception) {
             "Request failed (${response.code()})"
         }
+    }
+
+    private fun cleanErrorMessage(raw: String): String {
+        if (raw.contains("fieldErrors") || raw.contains("Invalid request body:")) {
+            val fieldMatch = Regex(""""([a-zA-Z0-9_]+)":\s*\["([^"]+)"]""").find(raw)
+            if (fieldMatch != null) {
+                val field = fieldMatch.groupValues[1]
+                val msg = fieldMatch.groupValues[2]
+                return "${field.replaceFirstChar { it.uppercase() }}: $msg"
+            }
+        }
+        return raw
     }
 
     companion object {

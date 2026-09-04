@@ -237,13 +237,23 @@ fun ProfileModal(
                     // REGISTER FORM
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Column {
-                            Text("Username", color = SecondaryText, style = MaterialTheme.typography.labelMedium)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text("Username", color = SecondaryText, style = MaterialTheme.typography.labelMedium)
+                                Text("3–24 chars, no spaces", color = SecondaryText.copy(alpha = 0.7f), style = MaterialTheme.typography.bodySmall)
+                            }
                             Spacer(Modifier.height(4.dp))
                             OutlinedTextField(
                                 value = regUsername,
-                                onValueChange = { regUsername = it },
+                                onValueChange = { input ->
+                                    regUsername = input.filter { it.isLetterOrDigit() || it == '_' }.take(24)
+                                },
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true,
+                                placeholder = { Text("e.g. Player_123", color = SecondaryText.copy(alpha = 0.5f)) },
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedBorderColor = Green,
                                     unfocusedBorderColor = TileBorder,
@@ -341,9 +351,17 @@ fun ProfileModal(
                             )
                         }
 
+                        val isUsernameValid = regUsername.length in 3..24
+                        val isPasswordLongEnough = regPassword.length >= 6
                         val passwordsMatch = regPassword.isNotBlank() && regPassword == regConfirmPassword
-                        val canRegister = regEmail.isNotBlank() && regUsername.isNotBlank() && passwordsMatch && !isLoading
+                        val canRegister = isUsernameValid && regEmail.isNotBlank() && passwordsMatch && isPasswordLongEnough && !isLoading
 
+                        if (regUsername.isNotEmpty() && regUsername.length < 3) {
+                            Text("Username must be at least 3 characters", color = Red, style = MaterialTheme.typography.bodySmall)
+                        }
+                        if (regPassword.isNotEmpty() && regPassword.length < 6) {
+                            Text("Password must be at least 6 characters", color = Red, style = MaterialTheme.typography.bodySmall)
+                        }
                         if (regPassword.isNotBlank() && regConfirmPassword.isNotBlank() && regPassword != regConfirmPassword) {
                             Text("Passwords do not match", color = Red, style = MaterialTheme.typography.bodySmall)
                         }
@@ -434,7 +452,9 @@ fun ProfileModal(
                     Spacer(Modifier.height(4.dp))
                     OutlinedTextField(
                         value = editUsername,
-                        onValueChange = { editUsername = it },
+                        onValueChange = { input ->
+                            editUsername = input.filter { it.isLetterOrDigit() || it == '_' }.take(24)
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
