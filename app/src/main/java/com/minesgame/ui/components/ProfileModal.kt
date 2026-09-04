@@ -49,17 +49,28 @@ import com.minesgame.ui.theme.TextPrimary
 import com.minesgame.ui.theme.Tile
 import com.minesgame.ui.theme.TileBorder
 
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.LaunchedEffect
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileModal(
     userProfile: UserProfile,
     formattedBalance: String,
+    isLoading: Boolean = false,
+    errorMessage: String? = null,
     onSaveProfile: (username: String, email: String, address: String) -> Unit,
     onLogin: (email: String, password: String) -> Unit,
     onRegister: (username: String, email: String, address: String, password: String) -> Unit,
     onLogout: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    LaunchedEffect(userProfile.isGuest) {
+        if (!userProfile.isGuest) {
+            onDismiss()
+        }
+    }
+
     var selectedTab by remember { mutableIntStateOf(0) } // 0 = Sign In, 1 = Register
 
     // Auth Form States
@@ -138,6 +149,22 @@ fun ProfileModal(
                     }
                 }
 
+                if (!errorMessage.isNullOrBlank()) {
+                    Surface(
+                        color = Red.copy(alpha = 0.15f),
+                        border = BorderStroke(1.dp, Red.copy(alpha = 0.5f)),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = errorMessage,
+                            color = Red,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(10.dp),
+                        )
+                    }
+                }
+
                 if (selectedTab == 0) {
                     // SIGN IN FORM
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -186,17 +213,24 @@ fun ProfileModal(
 
                         Button(
                             onClick = {
-                                if (loginEmail.isNotBlank()) {
+                                if (loginEmail.isNotBlank() && loginPassword.isNotBlank()) {
                                     onLogin(loginEmail, loginPassword)
-                                    onDismiss()
                                 }
                             },
-                            enabled = loginEmail.isNotBlank(),
+                            enabled = loginEmail.isNotBlank() && loginPassword.isNotBlank() && !isLoading,
                             modifier = Modifier.fillMaxWidth().height(48.dp),
                             shape = RoundedCornerShape(10.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Green, contentColor = Color.White),
                         ) {
-                            Text("Sign In", style = MaterialTheme.typography.titleMedium)
+                            if (isLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(22.dp),
+                                    color = Color.White,
+                                    strokeWidth = 2.dp,
+                                )
+                            } else {
+                                Text("Sign In", style = MaterialTheme.typography.titleMedium)
+                            }
                         }
                     }
                 } else {
@@ -307,19 +341,33 @@ fun ProfileModal(
                             )
                         }
 
+                        val passwordsMatch = regPassword.isNotBlank() && regPassword == regConfirmPassword
+                        val canRegister = regEmail.isNotBlank() && regUsername.isNotBlank() && passwordsMatch && !isLoading
+
+                        if (regPassword.isNotBlank() && regConfirmPassword.isNotBlank() && regPassword != regConfirmPassword) {
+                            Text("Passwords do not match", color = Red, style = MaterialTheme.typography.bodySmall)
+                        }
+
                         Button(
                             onClick = {
-                                if (regEmail.isNotBlank()) {
+                                if (canRegister) {
                                     onRegister(regUsername, regEmail, regAddress, regPassword)
-                                    onDismiss()
                                 }
                             },
-                            enabled = regEmail.isNotBlank(),
+                            enabled = canRegister,
                             modifier = Modifier.fillMaxWidth().height(48.dp),
                             shape = RoundedCornerShape(10.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Green, contentColor = Color.White),
                         ) {
-                            Text("Create Account", style = MaterialTheme.typography.titleMedium)
+                            if (isLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(22.dp),
+                                    color = Color.White,
+                                    strokeWidth = 2.dp,
+                                )
+                            } else {
+                                Text("Create Account", style = MaterialTheme.typography.titleMedium)
+                            }
                         }
                     }
                 }

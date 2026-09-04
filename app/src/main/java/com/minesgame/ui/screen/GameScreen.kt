@@ -46,6 +46,15 @@ import com.minesgame.ui.viewmodel.GameUiState
 import com.minesgame.ui.viewmodel.GameViewModel
 import kotlinx.coroutines.launch
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.Color
+import com.minesgame.ui.theme.Red
+
 @Composable
 fun GameScreen(
     viewModel: GameViewModel = viewModel(factory = GameViewModel.Factory),
@@ -67,6 +76,7 @@ fun GameScreen(
         onLanguageSelect = viewModel::setLanguage,
         onHapticsToggle = viewModel::setHapticsEnabled,
         onSoundToggle = viewModel::setSoundEnabled,
+        onClearError = viewModel::clearErrorMessage,
     )
 }
 
@@ -86,6 +96,7 @@ private fun MinesGameContent(
     onLanguageSelect: (String) -> Unit,
     onHapticsToggle: (Boolean) -> Unit,
     onSoundToggle: (Boolean) -> Unit,
+    onClearError: () -> Unit,
 ) {
     val active = state.gameState == GameState.ACTIVE
     val configuration = LocalConfiguration.current
@@ -121,11 +132,16 @@ private fun MinesGameContent(
         ProfileModal(
             userProfile = state.userProfile,
             formattedBalance = state.formattedBalance,
+            isLoading = state.isLoading,
+            errorMessage = state.errorMessage,
             onSaveProfile = onSaveProfile,
             onLogin = onLogin,
             onRegister = onRegister,
             onLogout = onLogout,
-            onDismiss = { showProfileSheet = false },
+            onDismiss = {
+                onClearError()
+                showProfileSheet = false
+            },
         )
     }
 
@@ -179,6 +195,50 @@ private fun MinesGameContent(
                     potentialWin = state.formattedPotentialWin,
                     compact = compact,
                 )
+
+                if (!state.errorMessage.isNullOrBlank() && !showProfileSheet) {
+                    Surface(
+                        color = Red.copy(alpha = 0.15f),
+                        border = BorderStroke(1.dp, Red.copy(alpha = 0.5f)),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = onClearError,
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Text(
+                                text = state.errorMessage,
+                                color = Red,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Text(
+                                text = "✕",
+                                color = Red,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    }
+                }
+
+                if (state.serverOnline == false) {
+                    Surface(
+                        color = Color(0xFFFFA500).copy(alpha = 0.15f),
+                        border = BorderStroke(1.dp, Color(0xFFFFA500).copy(alpha = 0.5f)),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = "Server waking up (Render free tier), please allow up to 45s...",
+                            color = Color(0xFFFFA500),
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        )
+                    }
+                }
             }
 
             // Center Area: Result Banner & Mines Grid
