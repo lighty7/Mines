@@ -47,4 +47,16 @@ interface MinesApiService {
 
     @POST("api/game/cashout")
     suspend fun cashout(@Body request: CashoutRequest): Response<CashoutResponse>
+
+    @POST("api/auth/send-otp")
+    suspend fun sendOtp(@Body request: com.minesgame.data.remote.dto.SendOtpRequest): Response<com.minesgame.data.remote.dto.MessageResponse>
+
+    @POST("api/auth/verify-otp")
+    suspend fun verifyOtp(@Body request: com.minesgame.data.remote.dto.VerifyOtpRequest): Response<com.minesgame.data.remote.dto.MessageResponse>
+
+    @POST("api/auth/reset-password")
+    suspend fun resetPassword(@Body request: com.minesgame.data.remote.dto.ResetPasswordRequest): Response<com.minesgame.data.remote.dto.MessageResponse>
+
+    @GET("api/user/transactions")
+    suspend fun getTransactions(@retrofit2.http.Query("limit") limit: Int = 50): Response<com.minesgame.data.remote.dto.TransactionsResponse>
 }
