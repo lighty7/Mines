@@ -42,6 +42,8 @@ import androidx.compose.ui.unit.dp
 import com.minesgame.data.engine.MinesEngine
 import com.minesgame.data.model.GameResult
 import com.minesgame.data.model.GameState
+import androidx.compose.foundation.shape.CircleShape
+import com.minesgame.data.model.UserProfile
 import com.minesgame.ui.theme.Green
 import com.minesgame.ui.theme.Panel
 import com.minesgame.ui.theme.Red
@@ -57,6 +59,9 @@ private fun formatAmount(value: Double): String = String.format(Locale.US, "%.2f
 @Composable
 fun TopBar(
     balance: String,
+    userProfile: UserProfile,
+    onOpenDrawer: () -> Unit,
+    onOpenProfile: () -> Unit,
     compact: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
@@ -65,11 +70,46 @@ fun TopBar(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
+        // Left Actions: Hamburger Menu + Profile Avatar
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Surface(
+                onClick = onOpenDrawer,
+                shape = RoundedCornerShape(8.dp),
+                color = Tile,
+                contentColor = TextPrimary,
+                modifier = Modifier.size(if (compact) 32.dp else 38.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text("☰", style = if (compact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge)
+                }
+            }
+
+            Surface(
+                onClick = onOpenProfile,
+                shape = CircleShape,
+                color = Green,
+                contentColor = Color.White,
+                modifier = Modifier.size(if (compact) 32.dp else 38.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    val initial = (userProfile.username.firstOrNull() ?: 'P').uppercaseChar().toString()
+                    Text(
+                        text = initial,
+                        style = if (compact) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
+                    )
+                }
+            }
+        }
+
         Text(
             text = "MINES",
             style = if (compact) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.headlineMedium,
             color = Green,
         )
+
         Column(horizontalAlignment = Alignment.End) {
             Text(
                 text = "Balance",
@@ -78,7 +118,7 @@ fun TopBar(
             )
             Text(
                 text = balance,
-                style = if (compact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
+                style = if (compact) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
                 color = TextPrimary,
             )
         }

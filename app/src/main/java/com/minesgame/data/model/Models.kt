@@ -15,3 +15,11 @@ data class GameResult(
     val multiplier: Double,
     val payout: Double,
 )
+
+data class UserProfile(
+    val username: String = "Guest",
+    val email: String = "",
+    val address: String = "",
+    val isGuest: Boolean = true,
+)
+
