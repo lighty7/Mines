@@ -156,10 +156,51 @@ class GameViewModel(
     fun updateUserProfile(username: String, email: String, address: String) {
         _uiState.update {
             it.copy(
-                userProfile = UserProfile(
-                    username = username.ifBlank { "Player1" },
+                userProfile = it.userProfile.copy(
+                    username = username.ifBlank { if (it.userProfile.isGuest) "Guest" else "Player" },
                     email = email,
                     address = address,
+                )
+            )
+        }
+    }
+
+    fun login(email: String, password: String) {
+        val extractedName = email.substringBefore("@").ifBlank { "Player1" }
+        _uiState.update {
+            it.copy(
+                userProfile = UserProfile(
+                    username = extractedName.replaceFirstChar { char -> char.uppercase() },
+                    email = email,
+                    address = it.userProfile.address,
+                    isGuest = false,
+                )
+            )
+        }
+    }
+
+    fun register(username: String, email: String, address: String, password: String) {
+        val name = username.ifBlank { email.substringBefore("@").ifBlank { "Player1" } }
+        _uiState.update {
+            it.copy(
+                userProfile = UserProfile(
+                    username = name,
+                    email = email,
+                    address = address,
+                    isGuest = false,
+                )
+            )
+        }
+    }
+
+    fun logout() {
+        _uiState.update {
+            it.copy(
+                userProfile = UserProfile(
+                    username = "Guest",
+                    email = "",
+                    address = "",
+                    isGuest = true,
                 )
             )
         }

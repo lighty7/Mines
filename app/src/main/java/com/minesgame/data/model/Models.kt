@@ -17,8 +17,9 @@ data class GameResult(
 )
 
 data class UserProfile(
-    val username: String = "Player1",
-    val email: String = "player@example.com",
-    val address: String = "123 Main St",
+    val username: String = "Guest",
+    val email: String = "",
+    val address: String = "",
+    val isGuest: Boolean = true,
 )
 
